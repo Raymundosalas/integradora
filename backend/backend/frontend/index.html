@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Catálogo de Películas - App</title>
+  <style>
+    :root{--bg:#f5f7fb;--card:#ffffff;--text:#0b2840;--accent:#0b78f6;--muted:#6b7a8a}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--text)}
+    header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:white;box-shadow:0 2px 6px rgba(10,20,40,0.06)}
+    h1{margin:0;font-size:18px}
+    main{padding:20px;max-width:1100px;margin:20px auto}
+    .card{background:var(--card);padding:16px;border-radius:10px;box-shadow:0 6px 20px rgba(10,20,40,0.04)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:16px}
+    .movie-card{border-radius:8px;overflow:hidden;background:#f7f9fc;border:1px solid rgba(10,20,40,0.03);cursor:pointer;display:flex;flex-direction:column}
+    .movie-card img{width:100%;height:260px;object-fit:cover;display:block}
+    .meta{padding:10px}
+    .btn{padding:8px 12px;border-radius:8px;background:var(--accent);color:white;border:none;cursor:pointer}
+    .btn.ghost{background:transparent;border:1px solid rgba(10,20,40,0.06);color:var(--text)}
+    form{display:grid;gap:8px}
+    input, textarea{padding:8px;border-radius:8px;border:1px solid rgba(10,20,40,0.07)}
+    .view{display:none}
+    .view.active{display:block}
+    footer{padding:12px;text-align:center;color:var(--muted);font-size:13px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;border-bottom:1px solid rgba(10,20,40,0.04)}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Catálogo de Películas</h1>
+    <div>
+      <span id="userLabel" style="margin-right:12px;color:var(--muted)"></span>
+      <button id="linkHome" class="btn ghost">Inicio</button>
+      <button id="linkCatalog" class="btn ghost">Catálogo</button>
+      <button id="linkAdmin" class="btn ghost">Administración</button>
+      <button id="btnLogout" class="btn" style="display:none">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="viewHome" class="card view active">
+      <h2>Bienvenido</h2>
+      <p>Regístrate o inicia sesión para ver y administrar el catálogo.</p>
+      <div style="margin-top:10px">
+        <button id="showRegister" class="btn">Registrarse</button>
+        <button id="showLogin" class="btn ghost">Iniciar sesión</button>
+      </div>
+    </section>
+
+    <section id="viewRegister" class="card view">
+      <h2>Crear cuenta</h2>
+      <form id="formRegister">
+        <input id="regName" placeholder="Nombre completo" required />
+        <input id="regEmail" placeholder="Correo" type="email" required />
+        <input id="regPass" placeholder="Contraseña" type="password" required />
+        <input id="regAdminCode" placeholder="Código de admin (opcional)" />
+        <div style="display:flex;gap:8px">
+          <button class="btn" type="submit">Crear cuenta</button>
+          <button type="button" id="cancelReg" class="btn ghost">Cancelar</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="viewLogin" class="card view">
+      <h2>Iniciar sesión</h2>
+      <form id="formLogin">
+        <input id="loginEmail" placeholder="Correo" type="email" required />
+        <input id="loginPass" placeholder="Contraseña" type="password" required />
+        <div style="display:flex;gap:8px">
+          <button class="btn" type="submit">Entrar</button>
+          <button type="button" id="cancelLogin" class="btn ghost">Cancelar</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="viewCatalog" class="card view">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2>Catálogo</h2>
+        <div>
+          <input id="search" placeholder="Buscar..." />
+          <button id="btnSearch" class="btn ghost">Buscar</button>
+        </div>
+      </div>
+      <div id="catalogGrid" class="grid" style="margin-top:12px"></div>
+    </section>
+
+    <section id="viewDetails" class="card view">
+      <button id="btnBackCatalog" class="btn ghost">← Volver</button>
+      <div style="display:flex;gap:18px;margin-top:12px;align-items:flex-start">
+        <div style="width:320px">
+          <img id="detailImg" src="" style="width:100%;border-radius:8px;object-fit:cover" />
+        </div>
+        <div>
+          <h2 id="detailTitle"></h2>
+          <p><strong>Año:</strong> <span id="detailYear"></span></p>
+          <p><strong>Director:</strong> <span id="detailDirector"></span></p>
+          <p><strong>Género:</strong> <span id="detailGenre"></span></p>
+          <p><strong>Sinopsis:</strong></p>
+          <p id="detailSynopsis"></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="viewAdmin" class="card view">
+      <h2>Administración</h2>
+      <p>Agregar o editar películas (requiere permisos de administrador en el backend).</p>
+      <form id="movieForm">
+        <input id="movieTitle" placeholder="Título" required />
+        <input id="movieYear" placeholder="Año" type="number" />
+        <input id="movieDirector" placeholder="Director" />
+        <input id="movieGenre" placeholder="Género" />
+        <textarea id="movieSynopsis" placeholder="Sinopsis"></textarea>
+        <label>Imagen (archivo)</label>
+        <input id="movieImageFile" type="file" accept="image/*" />
+        <input id="movieImageUrl" placeholder="O pega una URL" />
+        <div style="display:flex;gap:8px">
+          <button class="btn" type="submit">Guardar</button>
+          <button id="cancelMovie" class="btn ghost" type="button">Cancelar</button>
+        </div>
+      </form>
+
+      <hr />
+      <h3>Películas registradas</h3>
+      <table>
+        <thead><tr><th>Título</th><th>Año</th><th>Género</th><th>Acciones</th></tr></thead>
+        <tbody id="moviesTable"></tbody>
+      </table>
+    </section>
+
+  </main>
+
+  <footer>Proyecto: Catálogo de Películas • API & Base de datos</footer>
+
+  <script>
+    // Cambia si el API está en otra URL/puerto
+    const API_BASE = 'http://localhost:4000/api';
+    // --- Manejo vistas ---
+    const views = {
+      home: document.getElementById('viewHome'),
+      register: document.getElementById('viewRegister'),
+      login: document.getElementById('viewLogin'),
+      catalog: document.getElementById('viewCatalog'),
+      details: document.getElementById('viewDetails'),
+      admin: document.getElementById('viewAdmin')
+    };
+    function showView(name){
+      Object.values(views).forEach(v=>v.classList.remove('active'));
+      views[name].classList.add('active');
+      renderUserLabel();
+      if(name==='catalog') loadCatalog();
+      if(name==='admin') loadAdminTable();
+    }
+
+    // botones header
+    document.getElementById('linkHome').addEventListener('click', ()=>showView('home'));
+    document.getElementById('linkCatalog').addEventListener('click', ()=>{ if(!ensureAuth()) return; showView('catalog');});
+    document.getElementById('linkAdmin').addEventListener('click', ()=>{ if(!ensureAuth()) return; showView('admin');});
+    document.getElementById('btnLogout').addEventListener('click', ()=>{ localStorage.removeItem('token'); localStorage.removeItem('user'); alert('Sesión cerrada'); showView('home'); });
+
+    // mostrar forms registro/login
+    document.getElementById('showRegister').addEventListener('click', ()=>showView('register'));
+    document.getElementById('showLogin').addEventListener('click', ()=>showView('login'));
+    document.getElementById('cancelReg').addEventListener('click', ()=>showView('home'));
+    document.getElementById('cancelLogin').addEventListener('click', ()=>showView('home'));
+
+    function renderUserLabel(){
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      document.getElementById('userLabel').textContent = user ? user.name + (user.isAdmin ? ' (admin)' : '') : '';
+      document.getElementById('btnLogout').style.display = user ? 'inline-block' : 'none';
+    }
+
+    // --- Registro / Login ---
+    document.getElementById('formRegister').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('regName').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPass').value;
+      const adminCode = document.getElementById('regAdminCode').value.trim();
+      try {
+        const res = await fetch(API_BASE + '/auth/register', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ name, email, password, adminCode })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error');
+        alert('Registro exitoso');
+        showView('login');
+      } catch (err) { alert('Error: ' + err.message); }
+    });
+
+    document.getElementById('formLogin').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPass').value;
+      try {
+        const res = await fetch(API_BASE + '/auth/login', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Credenciales inválidas');
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        alert('Bienvenido ' + data.user.name);
+        showView('catalog');
+      } catch (err) { alert('Error: ' + err.message); }
+    });
+
+    function ensureAuth(){ const token = localStorage.getItem('token'); if(!token){ alert('Necesitas iniciar sesión'); showView('login'); return false } return true; }
+
+    // --- Catálogo ---
+    async function loadCatalog(){
+      try {
+        const q = encodeURIComponent(document.getElementById('search').value || '');
+        const res = await fetch(API_BASE + '/movies' + (q ? '?q='+q : ''));
+        const movies = await res.json();
+        const grid = document.getElementById('catalogGrid');
+        grid.innerHTML = '';
+        if (!movies.length) grid.innerHTML = '<p style="color:var(--muted)">No hay películas.</p>';
+        movies.forEach(m => {
+          const card = document.createElement('div'); card.className='movie-card';
+          const img = document.createElement('img'); img.src = m.image || 'https://via.placeholder.com/400x600?text=No+Image';
+          const meta = document.createElement('div'); meta.className='meta';
+          meta.innerHTML = '<strong>'+escapeHtml(m.title)+'</strong><div style="color:var(--muted);font-size:13px">'+(m.year || '')+' • '+(m.genre || '')+'</div>';
+          card.appendChild(img); card.appendChild(meta);
+          card.addEventListener('click', ()=>showDetails(m._id));
+          grid.appendChild(card);
+        });
+      } catch (err) { console.error(err); alert('Error al cargar catálogo'); }
+    }
+    document.getElementById('btnSearch').addEventListener('click', loadCatalog);
+
+    async function showDetails(id){
+      try {
+        const res = await fetch(API_BASE + '/movies/' + id);
+        if (!res.ok) throw new Error('No encontrado');
+        const m = await res.json();
+        document.getElementById('detailImg').src = m.image || 'https://via.placeholder.com/400x600?text=No+Image';
+        document.getElementById('detailTitle').textContent = m.title;
+        document.getElementById('detailYear').textContent = m.year || '';
+        document.getElementById('detailDirector').textContent = m.director || '';
+        document.getElementById('detailGenre').textContent = m.genre || '';
+        document.getElementById('detailSynopsis').textContent = m.synopsis || '';
+        showView('details');
+      } catch (err) { alert('Error al cargar detalles'); }
+    }
+    document.getElementById('btnBackCatalog').addEventListener('click', ()=>showView('catalog'));
+
+    // --- Administración (CRUD) ---
+    let editingId = null;
+    document.getElementById('movieForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!ensureAuth()) return;
+      // solo admin puede crear/editar: el backend valida
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('title', document.getElementById('movieTitle').value.trim());
+      formData.append('year', document.getElementById('movieYear').value);
+      formData.append('director', document.getElementById('movieDirector').value.trim());
+      formData.append('genre', document.getElementById('movieGenre').value.trim());
+      formData.append('synopsis', document.getElementById('movieSynopsis').value.trim());
+      const file = document.getElementById('movieImageFile').files[0];
+      if (file) formData.append('imageFile', file);
+      const imageUrl = document.getElementById('movieImageUrl').value.trim();
+      if (imageUrl) formData.append('imageUrl', imageUrl);
+
+      try {
+        const url = API_BASE + '/movies' + (editingId ? '/' + editingId : '');
+        const method = editingId ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          headers: { Authorization: 'Bearer ' + token },
+          body: formData
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al guardar');
+        alert('Película guardada');
+        clearMovieForm();
+        loadAdminTable();
+      } catch (err) { alert('Error: ' + err.message); }
+    });
+
+    function clearMovieForm(){
+      editingId = null;
+      document.getElementById('movieForm').reset();
+    }
+    document.getElementById('cancelMovie').addEventListener('click', clearMovieForm);
+
+    async function loadAdminTable(){
+      try {
+        const res = await fetch(API_BASE + '/movies');
+        const movies = await res.json();
+        const tbody = document.getElementById('moviesTable');
+        tbody.innerHTML = '';
+        movies.forEach(m => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${escapeHtml(m.title)}</td><td>${m.year||''}</td><td>${escapeHtml(m.genre||'')}</td>
+            <td>
+              <button data-id="${m._id}" class="btn btn-edit">Editar</button>
+              <button data-id="${m._id}" class="btn btn-del">Eliminar</button>
+            </td>`;
+          tbody.appendChild(tr);
+        });
+        // events
+        document.querySelectorAll('.btn-edit').forEach(btn => btn.addEventListener('click', async (e) => {
+          const id = e.currentTarget.dataset.id;
+          const res = await fetch(API_BASE + '/movies/' + id);
+          const m = await res.json();
+          editingId = m._id;
+          document.getElementById('movieTitle').value = m.title || '';
+          document.getElementById('movieYear').value = m.year || '';
+          document.getElementById('movieDirector').value = m.director || '';
+          document.getElementById('movieGenre').value = m.genre || '';
+          document.getElementById('movieSynopsis').value = m.synopsis || '';
+          document.getElementById('movieImageUrl').value = m.image || '';
+          showView('admin');
+        }));
+        document.querySelectorAll('.btn-del').forEach(btn => btn.addEventListener('click', async (e) => {
+          if(!confirm('¿Eliminar esta película?')) return;
+          const id = e.currentTarget.dataset.id;
+          try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(API_BASE + '/movies/' + id, {
+              method: 'DELETE',
+              headers: { Authorization: 'Bearer ' + token }
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Error al eliminar');
+            alert('Eliminada');
+            loadAdminTable();
+          } catch (err) { alert('Error: ' + err.message); }
+        }));
+      } catch (err) { console.error(err); alert('Error al cargar tabla'); }
+    }
+
+    // helpers
+    function escapeHtml(s){ if(!s) return ''; return s.replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',\"'\":'&#39;'}[m]; }); }
+
+    // Al cargar la página
+    (function init(){
+      renderUserLabel();
+      // carga catálogo inicial aunque no logueado (según tu requerimiento, catálogo público o privado)
+      loadCatalog();
+    })();
+  </script>
+</body>
+</html>
